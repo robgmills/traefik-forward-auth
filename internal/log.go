@@ -3,49 +3,48 @@ package tfa
 import (
 	"os"
 
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog"
 )
 
-var log *logrus.Logger
+var zlog zerolog.Logger
 
-// NewDefaultLogger creates a new logger based on the current configuration
-func NewDefaultLogger() *logrus.Logger {
-	// Setup logger
-	log = logrus.StandardLogger()
-	logrus.SetOutput(os.Stdout)
+func NewLogger() *zerolog.Logger {
+	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+	zlog = zerolog.New(os.Stdout).With().Timestamp().Logger()
 
-	// Set logger format
-	switch config.LogFormat {
-	case "pretty":
-		break
-	case "json":
-		logrus.SetFormatter(&logrus.JSONFormatter{})
-	// "text" is the default
-	default:
-		logrus.SetFormatter(&logrus.TextFormatter{
-			DisableColors: true,
-			FullTimestamp: true,
-		})
-	}
+	// // Set logger format
+	// switch config.LogFormat {
+	// case "pretty":
+	// 	break
+	// case "json":
+	// 	logrus.SetFormatter(&logrus.JSONFormatter{})
+	// // "text" is the default
+	// default:
+	// 	logrus.SetFormatter(&logrus.TextFormatter{
+	// 		DisableColors: true,
+	// 		FullTimestamp: true,
+	// 	})
+	// }
 
 	// Set logger level
 	switch config.LogLevel {
 	case "trace":
-		logrus.SetLevel(logrus.TraceLevel)
+		zerolog.SetGlobalLevel(zerolog.TraceLevel)
 	case "debug":
-		logrus.SetLevel(logrus.DebugLevel)
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	case "info":
-		logrus.SetLevel(logrus.InfoLevel)
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	case "error":
-		logrus.SetLevel(logrus.ErrorLevel)
+		zerolog.SetGlobalLevel(zerolog.ErrorLevel)
 	case "fatal":
-		logrus.SetLevel(logrus.FatalLevel)
+		zerolog.SetGlobalLevel(zerolog.FatalLevel)
 	case "panic":
-		logrus.SetLevel(logrus.PanicLevel)
+		zerolog.SetGlobalLevel(zerolog.PanicLevel)
 	// warn is the default
 	default:
-		logrus.SetLevel(logrus.WarnLevel)
+		zerolog.SetGlobalLevel(zerolog.WarnLevel)
 	}
 
-	return log
+	zlog.Debug().Msg("Initialized new logger")
+	return &zlog
 }

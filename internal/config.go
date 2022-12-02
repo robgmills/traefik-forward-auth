@@ -254,20 +254,20 @@ func convertLegacyToIni(name string) (io.Reader, error) {
 func (c *Config) Validate() {
 	// Check for show stopper errors
 	if len(c.Secret) == 0 {
-		log.Fatal("\"secret\" option must be set")
+		zlog.Fatal().Msg("\"secret\" option must be set")
 	}
 
 	// Setup default provider
 	err := c.setupProvider(c.DefaultProvider)
 	if err != nil {
-		log.Fatal(err)
+		zlog.Fatal().Err(err)
 	}
 
 	// Check rules (validates the rule and the rule provider)
 	for _, rule := range c.Rules {
 		err = rule.Validate(c)
 		if err != nil {
-			log.Fatal(err)
+			zlog.Fatal().Err(err)
 		}
 	}
 }
