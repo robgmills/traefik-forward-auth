@@ -15,7 +15,7 @@ services:
       # the next line is important to get auth to set the right redirect location on callback. 
       # the middleware forwards a request for authentication that needs to contain the original host in X-Forwarded-Host
       # traefik strips these/replaces them with new X-Forwarded-* values based on the new inbound request.
-      # - "--entryPoints.web.forwardedHeaders.insecure=true" 
+      - "--entryPoints.web.forwardedHeaders.insecure=true" 
     ports:
       - "80:80"
       - "8080:8080"
@@ -23,7 +23,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     labels:
       # - "traefik.enable=true"
-      - "traefik.http.middlewares.traefik-forward-auth.forwardauth.address=https://auth.robgmills.com"
+      - "traefik.http.middlewares.traefik-forward-auth.forwardauth.address=http://auth.robgmills.com"
       #- "traefik.http.middlewares.traefik-forward-auth.forwardauth.address=http://traefik-forward-auth:4181"
       - "traefik.http.middlewares.traefik-forward-auth.forwardauth.authResponseHeaders=X-Forwarded-User"
 
@@ -34,20 +34,20 @@ services:
       # This example uses "Selective Authentication"
       - "traefik.http.routers.whoami.middlewares=traefik-forward-auth"
 
-  # traefik-forward-auth:
-  #   #image: thomseddon/traefik-forward-auth:2.2.0
-  #   image: robgmills/traefik-forward-auth:latest
-  #   environment:
-  #     - PROVIDERS_GOOGLE_CLIENT_ID=${GOOG_CLIENT_ID}
-  #     - PROVIDERS_GOOGLE_CLIENT_SECRET=${GOOG_CLIENT_SECRET}
-  #     - SECRET=${COOKIE_SECRET}
-  #     # INSECURE_COOKIE is required if not using a https entrypoint
-  #     - INSECURE_COOKIE=true
-  #     - LOG_LEVEL=debug
-  #     - COOKIE_DOMAIN=robgmills.com
-  #     - AUTH_HOST=auth.robgmills.com
-  #   labels:
-  #     - "traefik.http.routers.traefik-forward-auth.rule=Host(`auth.robgmills.com`)"
-  #     # - "traefik.http.middlewares.traefik-forward-auth.forwardauth.address=http://traefik-forward-auth:4181"
-  #     # - "traefik.http.middlewares.traefik-forward-auth.forwardauth.authResponseHeaders=X-Forwarded-User"
-  #     - "traefik.http.services.traefik-forward-auth.loadbalancer.server.port=4181"
+  traefik-forward-auth:
+    #image: thomseddon/traefik-forward-auth:2.2.0
+    image: robgmills/traefik-forward-auth:latest
+    environment:
+      - PROVIDERS_GOOGLE_CLIENT_ID=${GOOG_CLIENT_ID}
+      - PROVIDERS_GOOGLE_CLIENT_SECRET=${GOOG_CLIENT_SECRET}
+      - SECRET=${COOKIE_SECRET}
+      # INSECURE_COOKIE is required if not using a https entrypoint
+      - INSECURE_COOKIE=true
+      - LOG_LEVEL=debug
+      - COOKIE_DOMAIN=robgmills.com
+      - AUTH_HOST=auth.robgmills.com
+    labels:
+      - "traefik.http.routers.traefik-forward-auth.rule=Host(`auth.robgmills.com`)"
+      # - "traefik.http.middlewares.traefik-forward-auth.forwardauth.address=http://traefik-forward-auth:4181"
+      # - "traefik.http.middlewares.traefik-forward-auth.forwardauth.authResponseHeaders=X-Forwarded-User"
+      - "traefik.http.services.traefik-forward-auth.loadbalancer.server.port=4181"
