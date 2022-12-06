@@ -186,11 +186,13 @@ func (s *Server) AuthCallbackHandler() http.HandlerFunc {
 		}
 
 		// Generate cookie
-		http.SetCookie(w, MakeCookie(r, user.Email))
+		auth := MakeCookie(r, user.Email)
+		http.SetCookie(w, auth)
 		logger.WithFields(logrus.Fields{
 			"provider": providerName,
 			"redirect": redirect,
 			"user":     user.Email,
+			"cookie":   auth,
 		}).Info("Successfully generated auth cookie, redirecting user.")
 
 		// Redirect
@@ -247,13 +249,17 @@ func (s *Server) authRedirect(logger *logrus.Entry, w http.ResponseWriter, r *ht
 func (s *Server) logger(r *http.Request, handler, rule, msg string) *logrus.Entry {
 	// Create logger
 	logger := log.WithFields(logrus.Fields{
-		"handler":   handler,
-		"rule":      rule,
-		"method":    r.Header.Get("X-Forwarded-Method"),
-		"proto":     r.Header.Get("X-Forwarded-Proto"),
-		"host":      r.Header.Get("X-Forwarded-Host"),
-		"uri":       r.Header.Get("X-Forwarded-Uri"),
-		"source_ip": r.Header.Get("X-Forwarded-For"),
+		"handler":     handler,
+		"rule":        rule,
+		"host":        r.Host,
+		"proto":       r.Proto,
+		"uri":         r.URL,
+		"method":      r.Method,
+		"f-method":    r.Header.Get("X-Forwarded-Method"),
+		"f-proto":     r.Header.Get("X-Forwarded-Proto"),
+		"f-host":      r.Header.Get("X-Forwarded-Host"),
+		"f-uri":       r.Header.Get("X-Forwarded-Uri"),
+		"f-source_ip": r.Header.Get("X-Forwarded-For"),
 	})
 
 	// Log request
