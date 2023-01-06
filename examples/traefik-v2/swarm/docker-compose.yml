@@ -4,50 +4,56 @@ services:
   traefik:
     image: traefik:v2.6.1
     command: 
-      - --providers.docker
+      - "--providers.docker"
       - "--log.level=DEBUG"
       - "--accesslog=true"
       - "--api.insecure=true"
       - "--accesslog.format=json"
-      - "--accesslog.fields.headers.defaultmode=keep"
-      - "--accesslog.fields.headers.names.X-Forwarded-Host=keep"
-      - "--entryPoints.web.address=:80"
-      # the next line is important to get auth to set the right redirect location on callback. 
-      # the middleware forwards a request for authentication that needs to contain the original host in X-Forwarded-Host
-      # traefik strips these/replaces them with new X-Forwarded-* values based on the new inbound request.
-      # - "--entryPoints.web.forwardedHeaders.insecure=true" 
+      #- "--accesslog.fields.headers.defaultmode=keep"
+      #- "--accesslog.fields.headers.names.X-Forwarded-Host=keep"
+      #- "--entryPoints.web.address=:80"
+      ## the next line is important to get auth to set the right redirect location on callback. 
+      ## the middleware forwards a request for authentication that needs to contain the original host in X-Forwarded-Host
+      ## traefik strips these/replaces them with new X-Forwarded-* values based on the new inbound request.
+      #- "--entryPoints.web.forwardedHeaders.insecure=true"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.caserver=${LE_CASERVER_URL}"
+      - "--certificatesresolvers.letsencrypt.acme.email=admin@robgmills.com"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
     ports:
       - "80:80"
+      - "443:443"
       - "8080:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     labels:
-      # - "traefik.enable=true"
-      - "traefik.http.middlewares.traefik-forward-auth.forwardauth.address=https://auth.robgmills.com"
-      #- "traefik.http.middlewares.traefik-forward-auth.forwardauth.address=http://traefik-forward-auth:4181"
+      - "traefik.http.middlewares.traefik-forward-auth.forwardauth.address=https://oauth.robgmills.com"
       - "traefik.http.middlewares.traefik-forward-auth.forwardauth.authResponseHeaders=X-Forwarded-User"
 
   whoami:
     image: containous/whoami
     labels:
       - "traefik.http.routers.whoami.rule=Host(`local.robgmills.com`)"
-      # This example uses "Selective Authentication"
+      ## This example uses "Selective Authentication"
       - "traefik.http.routers.whoami.middlewares=traefik-forward-auth"
+      - traefik.http.routers.whoami.entrypoints=websecure
+      - traefik.http.routers.whoami.tls.certresolver=letsencrypt
 
-  # traefik-forward-auth:
-  #   #image: thomseddon/traefik-forward-auth:2.2.0
-  #   image: robgmills/traefik-forward-auth:latest
-  #   environment:
-  #     - PROVIDERS_GOOGLE_CLIENT_ID=${GOOG_CLIENT_ID}
-  #     - PROVIDERS_GOOGLE_CLIENT_SECRET=${GOOG_CLIENT_SECRET}
-  #     - SECRET=${COOKIE_SECRET}
-  #     # INSECURE_COOKIE is required if not using a https entrypoint
-  #     - INSECURE_COOKIE=true
-  #     - LOG_LEVEL=debug
-  #     - COOKIE_DOMAIN=robgmills.com
-  #     - AUTH_HOST=auth.robgmills.com
-  #   labels:
-  #     - "traefik.http.routers.traefik-forward-auth.rule=Host(`auth.robgmills.com`)"
-  #     # - "traefik.http.middlewares.traefik-forward-auth.forwardauth.address=http://traefik-forward-auth:4181"
-  #     # - "traefik.http.middlewares.traefik-forward-auth.forwardauth.authResponseHeaders=X-Forwarded-User"
-  #     - "traefik.http.services.traefik-forward-auth.loadbalancer.server.port=4181"
+  traefik-forward-auth:
+    #image: thomseddon/traefik-forward-auth:2.2.0
+    image: robgmills/traefik-forward-auth:latest
+    environment:
+      - PROVIDERS_GOOGLE_CLIENT_ID=${GOOG_CLIENT_ID}
+      - PROVIDERS_GOOGLE_CLIENT_SECRET=${GOOG_CLIENT_SECRET}
+      - SECRET=${COOKIE_SECRET}
+      # INSECURE_COOKIE is required if not using a https entrypoint
+      - INSECURE_COOKIE=true
+      - LOG_LEVEL=debug
+      - COOKIE_DOMAIN=robgmills.com
+      - AUTH_HOST=auth.robgmills.com
+      - COOKIE_NAME=_auth
+      - CSRF_COOKIE_NAME=_auth_csrf
+    #labels:
+      #- "traefik.http.routers.traefik-forward-auth.rule=Host(`auth.robgmills.com`)"
+      #- "traefik.http.services.traefik-forward-auth.loadbalancer.server.port=4181"

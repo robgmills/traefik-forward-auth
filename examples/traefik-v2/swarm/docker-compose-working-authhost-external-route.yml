@@ -26,13 +26,19 @@ services:
       - "traefik.http.middlewares.traefik-forward-auth.forwardauth.address=http://auth.robgmills.com"
       #- "traefik.http.middlewares.traefik-forward-auth.forwardauth.address=http://traefik-forward-auth:4181"
       - "traefik.http.middlewares.traefik-forward-auth.forwardauth.authResponseHeaders=X-Forwarded-User"
+      - "traefik.http.middlewares.traefik-forward-auth.forwardauth.trustForwardHeader=true"
 
   whoami:
     image: containous/whoami
     labels:
-      - "traefik.http.routers.whoami.rule=Host(`local.robgmills.com`)"
+      - "traefik.http.routers.whoami.rule=Host(`local.robgmills.com`) && PathPrefix(`/secure`)"
       # This example uses "Selective Authentication"
       - "traefik.http.routers.whoami.middlewares=traefik-forward-auth"
+
+  whoami2:
+    image: containous/whoami
+    labels:
+      - "traefik.http.routers.whoami2.rule=Host(`local.robgmills.com`) && PathPrefix(`/notsecure`)"
 
   traefik-forward-auth:
     #image: thomseddon/traefik-forward-auth:2.2.0
@@ -46,6 +52,8 @@ services:
       - LOG_LEVEL=debug
       - COOKIE_DOMAIN=robgmills.com
       - AUTH_HOST=auth.robgmills.com
+      - COOKIE_NAME=_auth
+      - CSRF_COOKIE_NAME=_auth_csrf
     labels:
       - "traefik.http.routers.traefik-forward-auth.rule=Host(`auth.robgmills.com`)"
       # - "traefik.http.middlewares.traefik-forward-auth.forwardauth.address=http://traefik-forward-auth:4181"
