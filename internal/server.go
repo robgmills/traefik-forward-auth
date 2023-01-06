@@ -56,8 +56,12 @@ func (s *Server) buildRoutes() {
 // forwarded request so it's correctly routed by mux
 func (s *Server) RootHandler(w http.ResponseWriter, r *http.Request) {
 	// Modify request
-	r.Method = r.Header.Get("X-Forwarded-Method")
-	r.Host = r.Header.Get("X-Forwarded-Host")
+	if len(r.Header.Get("X-Forwarded-Method")) > 0 {
+		r.Method = r.Header.Get("X-Forwarded-Method")
+	}
+	if len(r.Header.Get("X-Forwarded-Host")) > 0 {
+		r.Host = r.Header.Get("X-Forwarded-Host")
+	}
 
 	// Read URI from header if we're acting as forward auth middleware
 	if _, ok := r.Header["X-Forwarded-Uri"]; ok {
